@@ -2,7 +2,7 @@
 /* APAC Cotia: telas do app (versão 0.2). Os dados vêm de data.js (servidor Supabase ou demonstração). */
 
 var SITE = 'https://apaccotia.ong.br';
-var VERSAO = '0.3.2';
+var VERSAO = '0.3.3';
 
 /* ---------- Utilidades ---------- */
 function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -772,7 +772,8 @@ function bannerInstalar() {
   return '<section class="card gold rowc" style="align-items:flex-start;gap:12px"><img src="img/icone-192.png" alt="" style="width:52px;height:52px;border-radius:12px;flex:none;box-shadow:0 1px 3px rgba(0,0,0,.2)">' +
     '<div class="stack" style="flex:1;min-width:0;gap:6px"><span class="h3">Coloque o app na tela inicial</span><span class="small" style="color:var(--gold-ink)">É grátis, leva menos de 1 minuto e abre como um app normal.</span>' +
     '<div class="rowc" style="gap:8px;flex-wrap:wrap">' + '<button type="button" class="btn xs auto" data-act="instalar">' + I('plus', 16, 2.4) + 'Instalar</button>' +
-    '<button type="button" class="btn xs auto outline" data-act="instalar-depois">Agora não</button></div></div></section>';
+    '<a class="btn xs auto outline" href="#/instalar">Ver como instalar</a></div>' +
+    '<button type="button" class="linkbtn" style="align-self:flex-start;font-size:14px;color:var(--gold-ink)" data-act="instalar-depois">Agora não</button></div></section>';
 }
 function mock(conteudo) { return '<div class="mock" aria-hidden="true">' + conteudo + '</div>'; }
 var MOCKS = {

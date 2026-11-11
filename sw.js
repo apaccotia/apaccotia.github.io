@@ -1,6 +1,6 @@
 /* Service worker do app APAC Cotia: guarda os arquivos do app para abrir rápido e sem internet.
    Busca sempre a versão nova primeiro, então as atualizações chegam assim que a pessoa abre o app. */
-var CACHE = 'apac-0.3.2';
+var CACHE = 'apac-0.3.3';
 var ARQUIVOS = [
   './', 'index.html', 'style.css', 'config.js', 'pix.js', 'data.js', 'app.js', 'manifest.webmanifest',
   'vendor/supabase-2.118.0.js', 'vendor/qrcode-generator-2.0.4.js',
