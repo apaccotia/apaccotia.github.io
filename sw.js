@@ -1,6 +1,6 @@
 /* Service worker do app APAC Cotia: guarda os arquivos do app para abrir rápido e sem internet.
    Busca sempre a versão nova primeiro, então as atualizações chegam assim que a pessoa abre o app. */
-var CACHE = 'apac-0.3.3';
+var CACHE = 'apac-0.3.4';
 var ARQUIVOS = [
   './', 'index.html', 'style.css', 'config.js', 'pix.js', 'data.js', 'app.js', 'manifest.webmanifest',
   'vendor/supabase-2.118.0.js', 'vendor/qrcode-generator-2.0.4.js',
@@ -19,7 +19,8 @@ self.addEventListener('activate', function (e) {
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) { return; }
-  e.respondWith(fetch(req).then(function (res) {
+  // no-cache: confere sempre com o servidor, para a versão nova aparecer na hora
+  e.respondWith(fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }).then(function (res) {
     if (res && res.ok) { var copia = res.clone(); caches.open(CACHE).then(function (c) { c.put(req, copia); }); }
     return res;
   }).catch(function () {
