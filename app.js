@@ -2,7 +2,7 @@
 /* APAC Cotia: telas do app (versão 0.2). Os dados vêm de data.js (servidor Supabase ou demonstração). */
 
 var SITE = 'https://apaccotia.ong.br';
-var VERSAO = '0.3.1';
+var VERSAO = '0.3.2';
 
 /* ---------- Utilidades ---------- */
 function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -725,8 +725,10 @@ var Instalar = (function () {
   };
 })();
 /* Convite que abre sozinho: ao entrar no site e logo depois do login */
-function podeConvidar(forcar) {
-  if (Instalar.instalado() || navigator.webdriver) { return false; }
+function podeConvidar(forcar, toque) {
+  if (Instalar.instalado()) { return false; }
+  if (toque) { return true; }
+  if (navigator.webdriver) { return false; }
   if (forcar) { return true; }
   try { var t = Number(localStorage.getItem('apac.convite.visto') || 0); return Date.now() - t > 3 * 864e5; } catch (e) { return true; }
 }
@@ -735,8 +737,8 @@ function fecharConvite() {
   if (c) { c.classList.remove('show'); setTimeout(function () { if (c.parentNode) { c.parentNode.removeChild(c); } }, 250); }
   try { localStorage.setItem('apac.convite.visto', String(Date.now())); } catch (e) { /* sem armazenamento */ }
 }
-function abrirConvite(forcar) {
-  if (!podeConvidar(forcar)) { return; }
+function abrirConvite(forcar, toque) {
+  if (!podeConvidar(forcar, toque)) { return; }
   var ios = Instalar.ios, umToque = Instalar.podeUmToque(), outroApp = Instalar.dentroDeOutroApp(), corpo;
   if (outroApp) {
     corpo = '<p class="lead">Para instalar, abra este link no navegador: toque em <strong>⋮</strong> ou <strong>•••</strong> no canto da tela e escolha <strong>"Abrir no navegador"</strong>.</p>' +
@@ -769,7 +771,7 @@ function bannerInstalar() {
   if (!Instalar.mostrarBanner()) { return ''; }
   return '<section class="card gold rowc" style="align-items:flex-start;gap:12px"><img src="img/icone-192.png" alt="" style="width:52px;height:52px;border-radius:12px;flex:none;box-shadow:0 1px 3px rgba(0,0,0,.2)">' +
     '<div class="stack" style="flex:1;min-width:0;gap:6px"><span class="h3">Coloque o app na tela inicial</span><span class="small" style="color:var(--gold-ink)">É grátis, leva menos de 1 minuto e abre como um app normal.</span>' +
-    '<div class="rowc" style="gap:8px;flex-wrap:wrap">' + (Instalar.podeUmToque() ? '<button type="button" class="btn xs auto" data-act="instalar-agora">Instalar agora</button>' : '<a class="btn xs auto" href="#/instalar">Ver como instalar</a>') +
+    '<div class="rowc" style="gap:8px;flex-wrap:wrap">' + '<button type="button" class="btn xs auto" data-act="instalar">' + I('plus', 16, 2.4) + 'Instalar</button>' +
     '<button type="button" class="btn xs auto outline" data-act="instalar-depois">Agora não</button></div></div></section>';
 }
 function mock(conteudo) { return '<div class="mock" aria-hidden="true">' + conteudo + '</div>'; }
@@ -1283,6 +1285,10 @@ var A = {
   'instalar-agora': function (el) {
     if (el.getAttribute('data-fecha')) { fecharConvite(); }
     Instalar.pedir().then(function (ok) { if (!ok) { desenhar(); } });
+  },
+  /* Botão Instalar do Início: abre a instalação do navegador quando ele permite; senão mostra os passos deste celular */
+  instalar: function () {
+    if (Instalar.podeUmToque()) { Instalar.pedir().then(function (ok) { if (!ok) { desenhar(); } }); } else { abrirConvite(true, true); }
   },
   'fechar-convite': function () { fecharConvite(); },
   'instalar-depois': function () { Instalar.dispensar(); desenhar(); toast('Tudo bem. Você encontra o passo a passo em Perfil.'); },
