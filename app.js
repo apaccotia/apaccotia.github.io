@@ -2,7 +2,7 @@
 /* APAC Cotia: telas do app (versão 0.2). Os dados vêm de data.js (servidor Supabase ou demonstração). */
 
 var SITE = 'https://apaccotia.ong.br';
-var VERSAO = '0.3.0';
+var VERSAO = '0.3.1';
 
 /* ---------- Utilidades ---------- */
 function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -696,6 +696,7 @@ var Instalar = (function () {
   var aviso = null;
   window.addEventListener('beforeinstallprompt', function (e) {
     e.preventDefault(); aviso = e;
+    if (document.getElementById('convite')) { abrirConvite(true); }
     var n = rotaAtual().nome; if (n === 'instalar' || n === 'inicio' || n === 'perfil') { desenhar(); }
   });
   window.addEventListener('appinstalled', function () { aviso = null; dispensar(); toast('App instalado! Procure o ícone da APAC na tela inicial do celular.'); });
@@ -723,6 +724,47 @@ var Instalar = (function () {
     }
   };
 })();
+/* Convite que abre sozinho: ao entrar no site e logo depois do login */
+function podeConvidar(forcar) {
+  if (Instalar.instalado() || navigator.webdriver) { return false; }
+  if (forcar) { return true; }
+  try { var t = Number(localStorage.getItem('apac.convite.visto') || 0); return Date.now() - t > 3 * 864e5; } catch (e) { return true; }
+}
+function fecharConvite() {
+  var c = document.getElementById('convite');
+  if (c) { c.classList.remove('show'); setTimeout(function () { if (c.parentNode) { c.parentNode.removeChild(c); } }, 250); }
+  try { localStorage.setItem('apac.convite.visto', String(Date.now())); } catch (e) { /* sem armazenamento */ }
+}
+function abrirConvite(forcar) {
+  if (!podeConvidar(forcar)) { return; }
+  var ios = Instalar.ios, umToque = Instalar.podeUmToque(), outroApp = Instalar.dentroDeOutroApp(), corpo;
+  if (outroApp) {
+    corpo = '<p class="lead">Para instalar, abra este link no navegador: toque em <strong>⋮</strong> ou <strong>•••</strong> no canto da tela e escolha <strong>"Abrir no navegador"</strong>.</p>' +
+      '<button type="button" class="btn sm outline" data-act="copiar" data-texto="' + esc(Instalar.endereco()) + '" data-ok="Endereço copiado. Cole no navegador.">Copiar o endereço do app</button>';
+  } else if (umToque) {
+    corpo = '<p class="lead">Instale com um toque e abra a APAC pelo ícone, como qualquer app.</p>' +
+      '<button type="button" class="btn gold" data-act="instalar-agora" data-fecha="1">' + I('plus', 20, 2.4) + 'Instalar agora</button>';
+  } else if (ios) {
+    corpo = '<ol class="stack" style="gap:10px">' +
+      '<li class="rowc" style="align-items:flex-start;gap:10px"><span class="num" style="width:28px;height:28px;font-size:15px">1</span><span style="font-size:15px;line-height:21px;padding-top:3px">Toque em <strong>Compartilhar</strong> <svg style="display:inline;vertical-align:-3px" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="ícone de compartilhar"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/></svg> na barra do Safari (às vezes dentro do <strong>•••</strong>).</span></li>' +
+      '<li class="rowc" style="align-items:flex-start;gap:10px"><span class="num" style="width:28px;height:28px;font-size:15px">2</span><span style="font-size:15px;line-height:21px;padding-top:3px">Escolha <strong>"Adicionar à Tela de Início"</strong>.</span></li>' +
+      '<li class="rowc" style="align-items:flex-start;gap:10px"><span class="num" style="width:28px;height:28px;font-size:15px">3</span><span style="font-size:15px;line-height:21px;padding-top:3px">Toque em <strong>Adicionar</strong>. Pronto!</span></li></ol>' +
+      '<a class="btn sm" href="#/instalar" data-act="fechar-convite">Ver o passo a passo com imagens</a>';
+  } else {
+    corpo = '<ol class="stack" style="gap:10px">' +
+      '<li class="rowc" style="align-items:flex-start;gap:10px"><span class="num" style="width:28px;height:28px;font-size:15px">1</span><span style="font-size:15px;line-height:21px;padding-top:3px">Toque nos <strong>três pontinhos ⋮</strong> no canto de cima do Chrome.</span></li>' +
+      '<li class="rowc" style="align-items:flex-start;gap:10px"><span class="num" style="width:28px;height:28px;font-size:15px">2</span><span style="font-size:15px;line-height:21px;padding-top:3px">Escolha <strong>"Adicionar à tela inicial"</strong> ou <strong>"Instalar app"</strong>.</span></li>' +
+      '<li class="rowc" style="align-items:flex-start;gap:10px"><span class="num" style="width:28px;height:28px;font-size:15px">3</span><span style="font-size:15px;line-height:21px;padding-top:3px">Confirme em <strong>Instalar</strong>. Pronto!</span></li></ol>' +
+      '<a class="btn sm" href="#/instalar" data-act="fechar-convite">Ver o passo a passo com imagens</a>';
+  }
+  var c = document.getElementById('convite');
+  if (!c) { c = document.createElement('div'); c.id = 'convite'; document.body.appendChild(c); }
+  c.innerHTML = '<div class="convite-fundo" data-act="fechar-convite"></div><section class="convite-folha" role="dialog" aria-modal="true" aria-labelledby="convite-titulo">' +
+    '<div class="rowc" style="gap:14px"><img src="img/icone-192.png" alt="" style="width:60px;height:60px;border-radius:14px;flex:none;box-shadow:0 1px 4px rgba(0,0,0,.2)"><div class="stack none"><h2 class="h2" id="convite-titulo" style="font-size:22px;line-height:28px">Coloque a APAC na tela inicial</h2><span class="small muted">Grátis, sem loja de aplicativos, em menos de 1 minuto.</span></div></div>' +
+    corpo + '<button type="button" class="btn outline sm" data-act="fechar-convite">Agora não</button></section>';
+  requestAnimationFrame(function () { c.classList.add('show'); });
+}
+
 function bannerInstalar() {
   if (!Instalar.mostrarBanner()) { return ''; }
   return '<section class="card gold rowc" style="align-items:flex-start;gap:12px"><img src="img/icone-192.png" alt="" style="width:52px;height:52px;border-radius:12px;flex:none;box-shadow:0 1px 3px rgba(0,0,0,.2)">' +
@@ -836,7 +878,7 @@ async function painelAdmin() {
     ['lista/campanhas', 'Campanhas e feiras', 'cal'], ['lista/metas', 'Metas de arrecadação', 'chart'], ['atualizacoes', 'Notícias para padrinhos', 'img'], ['apoios', 'Padrinhos e apoios', 'heart'],
     ['lista/itens_doacao', 'Itens para doação', 'box'], ['lista/locais_atendimento', 'Atendimento veterinário', 'pin'], ['lista/avisos', 'Avisos', 'bell'], ['clientes', 'Clientes', 'people'], ['config', 'Configurações', 'gear']];
   return '<div class="screen"><main class="scroll">' +
-    '<div class="rowc"><img src="img/gato.jpg" alt="" style="width:48px;height:48px;border-radius:24px;object-fit:cover;flex:none"><div class="stack none"><h1 class="h1" style="font-size:26px;line-height:32px">Painel da equipe</h1><span class="small muted">Atualizado em ' + dataBR(r.hoje) + '</span></div></div>' + avisoDemo() +
+    '<div class="rowc"><img src="img/gato.jpg" alt="" style="width:48px;height:48px;border-radius:24px;object-fit:cover;flex:none"><div class="stack none"><h1 class="h1" style="font-size:26px;line-height:32px">Painel da equipe</h1><span class="small muted">Atualizado em ' + dataBR(r.hoje) + '</span></div></div>' + avisoDemo() + bannerInstalar() +
     (r.pendentes_qtd ? '<a class="promo gold" href="#/admin/pagamentos">' + I('coin', 28) + '<span class="grow"><span class="h3">' + plural(r.pendentes_qtd, 'Pix para conferir', 'Pix para conferir') + '</span><span class="small">' + reais(r.pendentes_valor) + ' aguardando confirmação</span></span>' + I('right', 20, 2.2) + '</a>' : '') +
     '<section class="card stack"><div class="between"><h2 class="h2">Acessos ao app</h2><span class="small muted">aparelhos por dia</span></div>' +
     '<div class="between"><div class="stack none"><span class="h1" style="font-size:32px;line-height:38px">' + hojeAc + '</span><span class="xs muted" style="font-weight:700">hoje</span></div><div class="stack none" style="text-align:right"><span class="h2">' + semana + '</span><span class="xs muted" style="font-weight:700">últimos 7 dias</span></div></div>' +
@@ -1238,9 +1280,11 @@ var A = {
   'remover-pet': function (el) { return ocupado(el, async function () { await D.apagar('pets', el.getAttribute('data-id')); desenhar(); }); },
   sair: async function () { await D.sair(); S.pedido = {}; S.form = null; S.comoCliente = false; ultimaRota = ''; desenhar(); toast('Você saiu da conta'); },
   'excluir-conta': function (el) { return ocupado(el, async function () { await D.excluirConta(); toast('Sua conta foi excluída.'); trocar('/inicio'); }); },
-  'instalar-agora': function () {
+  'instalar-agora': function (el) {
+    if (el.getAttribute('data-fecha')) { fecharConvite(); }
     Instalar.pedir().then(function (ok) { if (!ok) { desenhar(); } });
   },
+  'fechar-convite': function () { fecharConvite(); },
   'instalar-depois': function () { Instalar.dispensar(); desenhar(); toast('Tudo bem. Você encontra o passo a passo em Perfil.'); },
   'compartilhar-app': function () {
     var url = Instalar.endereco(), txt = 'Conheça o app da APAC Cotia: adote, denuncie maus-tratos e ajude os animais.';
@@ -1306,7 +1350,7 @@ document.addEventListener('click', function (e) {
 });
 
 /* ---------- Formulários de conta ---------- */
-function seguir() { var q = rotaAtual().q; trocar(q.next && q.next.charAt(0) === '/' ? q.next : '/perfil'); }
+function seguir() { var q = rotaAtual().q; trocar(q.next && q.next.charAt(0) === '/' ? q.next : '/perfil'); setTimeout(function () { abrirConvite(true); }, 700); }
 var FORMS = {
   cadastro: async function (f) {
     var nome = f.nome.value.trim(), email = f.email.value.trim().toLowerCase(), cel = f.celular.value.trim(), senha = f.senha.value;
@@ -1366,6 +1410,6 @@ document.addEventListener('submit', function (e) {
   var ab = document.getElementById('abertura'), t0 = Date.now();
   Instalar.registrar();
   D.iniciar().then(function () { return desenhar(); }).then(function () {
-    setTimeout(function () { ab.classList.add('sai'); setTimeout(function () { ab.remove(); }, 400); }, Math.max(0, 900 - (Date.now() - t0)));
+    setTimeout(function () { ab.classList.add('sai'); setTimeout(function () { ab.remove(); }, 400); setTimeout(function () { if (rotaAtual().nome !== 'instalar') { abrirConvite(false); } }, 1200); }, Math.max(0, 900 - (Date.now() - t0)));
   });
 })();
